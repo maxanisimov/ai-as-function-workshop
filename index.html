@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI as a Function</title>
+  <style>
+    /*
+      AI as a Function — Workshop App
+      --------------------------------
+      This is a single-file web app.
+      You can open it directly in a browser.
+
+      The app teaches this idea:
+      AI model = function with adjustable parameters.
+
+      Our mini model is:
+          y = a*x + b
+
+      x = input
+      y = output / prediction
+      a and b = parameters
+    */
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f6fb;
+      color: #172033;
+    }
+
+    header {
+      background: linear-gradient(90deg, #1d4ed8, #7c3aed);
+      color: white;
+      padding: 24px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 42px;
+    }
+
+    header p {
+      margin: 8px 0 0;
+      font-size: 18px;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 0 16px 40px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr 1fr;
+      gap: 18px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 8px 22px rgba(20, 30, 60, 0.08);
+      border: 1px solid #e2e8f0;
+    }
+
+    h2 {
+      margin-top: 0;
+      font-size: 24px;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+    }
+
+    .formula-box {
+      background: #f3e8ff;
+      border: 2px solid #c084fc;
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+      font-size: 36px;
+      font-weight: bold;
+      margin-bottom: 18px;
+    }
+
+    .control {
+      margin: 18px 0;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    .number-line {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .value {
+      font-weight: bold;
+      color: #1d4ed8;
+    }
+
+    .example-box {
+      background: #eff6ff;
+      border: 2px solid #bfdbfe;
+      border-radius: 14px;
+      padding: 14px;
+      margin-top: 14px;
+      text-align: center;
+      font-size: 18px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 390px;
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #cbd5e1;
+    }
+
+    button {
+      width: 100%;
+      background: #7c3aed;
+      color: white;
+      border: none;
+      padding: 16px;
+      border-radius: 14px;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 8px 0 14px;
+    }
+
+    button:hover {
+      background: #6d28d9;
+    }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 11px 0;
+      font-size: 17px;
+    }
+
+    .metric span:last-child {
+      font-weight: bold;
+      color: #15803d;
+    }
+
+    .prediction-box {
+      background: #ecfdf5;
+      border: 2px solid #bbf7d0;
+      border-radius: 14px;
+      padding: 16px;
+      margin-top: 14px;
+    }
+
+    .prediction-big {
+      font-size: 32px;
+      font-weight: bold;
+      color: #15803d;
+    }
+
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .flow-box {
+      background: #f8fafc;
+      border: 2px solid #cbd5e1;
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+      min-height: 82px;
+    }
+
+    .arrow {
+      font-size: 28px;
+      font-weight: bold;
+      color: #475569;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 15px;
+      margin-top: 12px;
+    }
+
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #eef2ff;
+    }
+
+    .challenge {
+      background: #fff7ed;
+      border-color: #fed7aa;
+    }
+
+    .small-note {
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      .grid, .bottom-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .flow {
+        grid-template-columns: 1fr;
+      }
+
+      .arrow {
+        transform: rotate(90deg);
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AI as a Function</h1>
+    <p>Build and train a mini model: input → function → output</p>
+  </header>
+
+  <main>
+    <section class="grid">
+      <!-- LEFT CARD: FUNCTION MACHINE -->
+      <div class="card">
+        <h2>1. Function Machine</h2>
+
+        <p class="small-note">
+          Our mini AI model is a simple function. It takes an input <b>x</b>
+          and predicts an output <b>y</b>.
+        </p>
+
+        <div class="formula-box">y = ax + b</div>
+
+        <div class="control">
+          <label>Input x: <span id="xValue" class="value">12</span></label>
+          <input id="xSlider" type="range" min="0" max="35" step="1" value="12" />
+          <div class="number-line"><span>0</span><span>35</span></div>
+        </div>
+
+        <div class="control">
+          <label>Parameter a, the slope: <span id="aValue" class="value">-0.4</span></label>
+          <input id="aSlider" type="range" min="-2" max="2" step="0.05" value="-0.4" />
+          <div class="number-line"><span>-2</span><span>2</span></div>
+        </div>
+
+        <div class="control">
+          <label>Parameter b, the intercept: <span id="bValue" class="value">31</span></label>
+          <input id="bSlider" type="range" min="0" max="60" step="0.5" value="31" />
+          <div class="number-line"><span>0</span><span>60</span></div>
+        </div>
+
+        <div class="example-box">
+          <div>Input: <b>x = <span id="exampleX">12</span></b></div>
+          <div>Output: <b>y = <span id="exampleY">26.2</span></b></div>
+        </div>
+      </div>
+
+      <!-- MIDDLE CARD: GRAPH -->
+      <div class="card">
+        <h2>2. Training Data and Model Line</h2>
+        <p class="small-note">
+          Blue dots are examples. The line is the model's prediction.
+          Try to make the line pass near the dots.
+        </p>
+        <canvas id="graph" width="500" height="430"></canvas>
+      </div>
+
+      <!-- RIGHT CARD: TRAINING -->
+      <div class="card">
+        <h2>3. Train the Model</h2>
+        <p class="small-note">
+          Training means changing the parameters so the model makes smaller mistakes.
+        </p>
+
+        <button id="trainButton">Train Model</button>
+
+        <div class="metric">
+          <span>Average error</span>
+          <span><span id="errorValue">0</span> min</span>
+        </div>
+
+        <div class="metric">
+          <span>Current a</span>
+          <span id="metricA">-0.4</span>
+        </div>
+
+        <div class="metric">
+          <span>Current b</span>
+          <span id="metricB">31</span>
+        </div>
+
+        <div class="prediction-box">
+          <h3>Try a new input</h3>
+          <p>Weekly training distance: <b><span id="testInputText">12</span> km</b></p>
+          <p>Predicted race time:</p>
+          <div class="prediction-big"><span id="predictionText">26.2</span> min</div>
+          <p class="small-note">Lower race time is better.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="bottom-grid">
+      <!-- CONNECTION TO AI -->
+      <div class="card">
+        <h2>4. How this connects to AI</h2>
+
+        <div class="flow">
+          <div class="flow-box">
+            <b>Input</b><br />
+            Training distance<br />
+            <span id="flowInput">12 km</span>
+          </div>
+
+          <div class="arrow">→</div>
+
+          <div class="flow-box">
+            <b>Model</b><br />
+            y = ax + b<br />
+            learns a and b
+          </div>
+
+          <div class="arrow">→</div>
+
+          <div class="flow-box">
+            <b>Output</b><br />
+            Predicted race time<br />
+            <span id="flowOutput">26.2 min</span>
+          </div>
+        </div>
+
+        <p>
+          A real AI model is also a function. It usually has many more inputs,
+          many more outputs, and many more parameters.
+        </p>
+      </div>
+
+      <!-- MINI MODEL VS LLM -->
+      <div class="card">
+        <h2>5. Mini Model vs LLM</h2>
+
+        <table>
+          <tr>
+            <th>Idea</th>
+            <th>This app</th>
+            <th>Large language model</th>
+          </tr>
+          <tr>
+            <td>Input</td>
+            <td>Training distance</td>
+            <td>Previous words</td>
+          </tr>
+          <tr>
+            <td>Output</td>
+            <td>Race time</td>
+            <td>Next word</td>
+          </tr>
+          <tr>
+            <td>Parameters</td>
+            <td>a and b</td>
+            <td>Millions or billions of weights</td>
+          </tr>
+          <tr>
+            <td>Training</td>
+            <td>Reduce race-time error</td>
+            <td>Reduce next-word error</td>
+          </tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="card challenge" style="margin-top: 18px;">
+      <h2>Student Challenge</h2>
+      <p>
+        Can you change the model so the average error is below <b>2 minutes</b>
+        before pressing the Train Model button?
+      </p>
+      <p>
+        Then try a strange input, such as <b>0 km</b> or <b>35 km</b>.
+        Does the model always make sense?
+      </p>
+    </section>
+  </main>
+
+  <script>
+    // ---------------------------------------------
+    // 1. Our training data
+    // ---------------------------------------------
+    // Each object has:
+    // x = weekly training distance, in km
+    // y = race time, in minutes
+    // TODO: EDIT THIS DATA TO CHANGE THE PROBLEM
+    const trainingData = [
+      { x: 5,  y: 30 },
+      { x: 10, y: 27 },
+      { x: 15, y: 25 },
+      { x: 20, y: 23 },
+      { x: 25, y: 22 },
+      { x: 30, y: 21 }
+    ];
+
+    // ---------------------------------------------
+    // 2. Get the important parts of the page
+    // ---------------------------------------------
+    const xSlider = document.getElementById("xSlider");
+    const aSlider = document.getElementById("aSlider");
+    const bSlider = document.getElementById("bSlider");
+
+    const xValue = document.getElementById("xValue");
+    const aValue = document.getElementById("aValue");
+    const bValue = document.getElementById("bValue");
+
+    const exampleX = document.getElementById("exampleX");
+    const exampleY = document.getElementById("exampleY");
+
+    const errorValue = document.getElementById("errorValue");
+    const metricA = document.getElementById("metricA");
+    const metricB = document.getElementById("metricB");
+
+    const predictionText = document.getElementById("predictionText");
+    const testInputText = document.getElementById("testInputText");
+    const flowInput = document.getElementById("flowInput");
+    const flowOutput = document.getElementById("flowOutput");
+
+    const trainButton = document.getElementById("trainButton");
+    const canvas = document.getElementById("graph");
+    const ctx = canvas.getContext("2d");
+
+    // ---------------------------------------------
+    // 3. Model function
+    // ---------------------------------------------
+    // This is our mini AI model.
+    // It takes x as input and returns y as output.
+    function model(x, a, b) {
+      return a * x + b;
+    }
+
+    // ---------------------------------------------
+    // 4. Error function
+    // ---------------------------------------------
+    // This measures how wrong the model is on average.
+    function averageError(a, b) {
+      let totalError = 0;
+
+      for (let point of trainingData) {
+        let prediction = model(point.x, a, b);
+        let error = Math.abs(prediction - point.y);
+        totalError = totalError + error;
+      }
+
+      return totalError / trainingData.length;
+    }
+
+    // ---------------------------------------------
+    // 5. Draw the graph
+    // ---------------------------------------------
+    function drawGraph(a, b) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const margin = 55;
+      const graphWidth = canvas.width - 2 * margin;
+      const graphHeight = canvas.height - 2 * margin;
+
+      // These are the graph limits.
+      const xMin = 0;
+      const xMax = 35;
+      const yMin = 10;
+      const yMax = 35;
+
+      function xToCanvas(x) {
+        return margin + ((x - xMin) / (xMax - xMin)) * graphWidth;
+      }
+
+      function yToCanvas(y) {
+        return margin + graphHeight - ((y - yMin) / (yMax - yMin)) * graphHeight;
+      }
+
+      // Draw background grid
+      ctx.strokeStyle = "#e2e8f0";
+      ctx.lineWidth = 1;
+
+      for (let x = 0; x <= 35; x += 5) {
+        let cx = xToCanvas(x);
+        ctx.beginPath();
+        ctx.moveTo(cx, margin);
+        ctx.lineTo(cx, margin + graphHeight);
+        ctx.stroke();
+      }
+
+      for (let y = 10; y <= 35; y += 5) {
+        let cy = yToCanvas(y);
+        ctx.beginPath();
+        ctx.moveTo(margin, cy);
+        ctx.lineTo(margin + graphWidth, cy);
+        ctx.stroke();
+      }
+
+      // Draw axes
+      ctx.strokeStyle = "#172033";
+      ctx.lineWidth = 2;
+
+      ctx.beginPath();
+      ctx.moveTo(margin, margin);
+      ctx.lineTo(margin, margin + graphHeight);
+      ctx.lineTo(margin + graphWidth, margin + graphHeight);
+      ctx.stroke();
+
+      // Draw axis labels
+      ctx.fillStyle = "#172033";
+      ctx.font = "16px Arial";
+      ctx.fillText("Training distance, x (km per week)", 210, canvas.height - 15);
+
+      ctx.save();
+      ctx.translate(18, 270);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText("Race time, y (minutes)", 0, 0);
+      ctx.restore();
+
+      // Draw tick labels
+      ctx.font = "13px Arial";
+      ctx.fillStyle = "#475569";
+
+      for (let x = 0; x <= 35; x += 5) {
+        ctx.fillText(x, xToCanvas(x) - 5, margin + graphHeight + 20);
+      }
+
+      for (let y = 10; y <= 35; y += 5) {
+        ctx.fillText(y, margin - 30, yToCanvas(y) + 5);
+      }
+
+      // Draw the model line
+      const startX = xMin;
+      const endX = xMax;
+      const startY = model(startX, a, b);
+      const endY = model(endX, a, b);
+
+      ctx.strokeStyle = "#7c3aed";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(xToCanvas(startX), yToCanvas(startY));
+      ctx.lineTo(xToCanvas(endX), yToCanvas(endY));
+      ctx.stroke();
+
+      // Draw training data points
+      ctx.fillStyle = "#1d4ed8";
+
+      for (let point of trainingData) {
+        ctx.beginPath();
+        ctx.arc(xToCanvas(point.x), yToCanvas(point.y), 7, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+
+      // Draw legend
+      ctx.fillStyle = "#1d4ed8";
+      ctx.beginPath();
+      ctx.arc(margin + 10, 25, 7, 0, 2 * Math.PI);
+      ctx.fill();
+
+      ctx.fillStyle = "#172033";
+      ctx.font = "15px Arial";
+      ctx.fillText("Training data", margin + 25, 30);
+
+      ctx.strokeStyle = "#7c3aed";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(margin + 155, 25);
+      ctx.lineTo(margin + 205, 25);
+      ctx.stroke();
+
+      ctx.fillStyle = "#172033";
+      ctx.fillText("Model line", margin + 215, 30);
+    }
+
+    // ---------------------------------------------
+    // 6. Update everything on the page
+    // ---------------------------------------------
+    function updatePage() {
+      const x = Number(xSlider.value);
+      const a = Number(aSlider.value);
+      const b = Number(bSlider.value);
+
+      const y = model(x, a, b);
+      const error = averageError(a, b);
+
+      xValue.textContent = x;
+      aValue.textContent = a.toFixed(2);
+      bValue.textContent = b.toFixed(1);
+
+      exampleX.textContent = x;
+      exampleY.textContent = y.toFixed(1);
+
+      errorValue.textContent = error.toFixed(2);
+      metricA.textContent = a.toFixed(2);
+      metricB.textContent = b.toFixed(1);
+
+      testInputText.textContent = x;
+      predictionText.textContent = y.toFixed(1);
+      flowInput.textContent = x + " km";
+      flowOutput.textContent = y.toFixed(1) + " min";
+
+      drawGraph(a, b);
+    }
+
+    // ---------------------------------------------
+    // 7. Train the model automatically
+    // ---------------------------------------------
+    // This uses a simple search.
+    // It tries many possible values of a and b.
+    // It keeps the pair with the lowest average error.
+    function trainModel() {
+      let bestA = 0;
+      let bestB = 0;
+      let bestError = Infinity;
+
+      for (let a = -2; a <= 1; a = a + 0.01) {
+        for (let b = 10; b <= 45; b = b + 0.1) {
+          let error = averageError(a, b);
+
+          if (error < bestError) {
+            bestError = error;
+            bestA = a;
+            bestB = b;
+          }
+        }
+      }
+
+      aSlider.value = bestA;
+      bSlider.value = bestB;
+
+      updatePage();
+    }
+
+    // ---------------------------------------------
+    // 8. Make the page interactive
+    // ---------------------------------------------
+    xSlider.addEventListener("input", updatePage);
+    aSlider.addEventListener("input", updatePage);
+    bSlider.addEventListener("input", updatePage);
+    trainButton.addEventListener("click", trainModel);
+
+    // Draw the first version when the page opens.
+    updatePage();
+  </script>
+</body>
+</html>
